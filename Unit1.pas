@@ -31,6 +31,7 @@ var
   Form1: TForm1;
   crctable: array[0..255] of longword;
   filearray: array[0..5] of byte;
+  customarray: array[0..1000] of int64;
 
 implementation
 
@@ -180,7 +181,7 @@ begin
   while AnsiPos(']',s) <> 0 do
     begin
     sub := Explode(Explode(s,']',0),'[',-1); // Get contents of square brackets.
-    t := AnsiRightStr(Explode(Explode(s,']',0),'[',-2),1); // Get character before bracket (b/w/d/s).
+    t := AnsiRightStr(Explode(Explode(s,']',0),'[',-2),1); // Get character before bracket (b/w/d/s/a).
     s := ReplaceStr(s,t+'['+sub+']',InttoStr(Solve2(sub,t))); // Solve & remove brackets.
     end;
   while AnsiPos(')',s) <> 0 do
@@ -203,6 +204,7 @@ begin
     stringmax := Solve(Explode(s,',',1));
     result := CRCString(GetString(stringaddr,stringmax)); // Return CRC32 of string.
     end
+  else if t = 'a' then result := customarray[Solve(s)] // Return integer from array.
   else result := 0; // Return nothing.
 end;
 
