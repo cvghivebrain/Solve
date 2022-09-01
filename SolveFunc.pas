@@ -50,6 +50,7 @@ begin
   s := ReplaceStr(s,'%','?%'); // Modulo
   // Allow negative numbers.
   s := ReplaceStr(s,'+?-','+-');
+  s := ReplaceStr(s,'-?-','+');
   s := ReplaceStr(s,'*?-','*-');
   s := ReplaceStr(s,'/?-','/-');
   s := ReplaceStr(s,'&?-','&-');
@@ -58,7 +59,7 @@ begin
   s := ReplaceStr(s,'%?-','%-');
   s := ReplaceStr(s,'L?-','L-');
   s := ReplaceStr(s,'R?-','R-');
-  if Copy(s,1,2) = '?-' then Delete(s,1,1); // Allow sum to start with negative.
+  if Copy(s,1,2) = '?-' then s := '0'+s; // Insert 0 at start if sum starts with -.
   i := 0;
   r := StrtoInt64(Explode(s,'?',0));
   while Explode(s,'?',i) <> '' do
