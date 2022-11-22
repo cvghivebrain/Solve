@@ -28,7 +28,8 @@ implementation
 procedure TForm1.btnGoClick(Sender: TObject);
 begin
   memOutput.Clear;
-  memOutput.Lines.Add(InttoStr(Solve(editInput.Text)));
+  val := 999;
+  memOutput.Lines.Add(SolveStr(editInput.Text));
 end;
 
 end.
