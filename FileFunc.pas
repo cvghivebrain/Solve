@@ -5,6 +5,7 @@ uses SysUtils;
 
 procedure LoadFile(openthis: string);
 procedure SaveFile(savethis: string);
+procedure ClipFile(a, len: integer; clipthis: string);
 function GetByte(a: integer): byte;
 function GetBit(a, b: integer): byte;
 function Bit(i, b: integer): byte;
@@ -44,6 +45,21 @@ begin
   ReWrite(myfile,1);
   BlockWrite(myfile,filearray[0],Length(filearray)); // Copy contents of array to file.
   CloseFile(myfile); // Close file.
+end;
+
+{ Save section of file to another file. }
+
+procedure ClipFile(a, len: integer; clipthis: string);
+var myclipfile: file;
+  clipfilearray: array of byte;
+begin
+  AssignFile(myclipfile,clipthis); // Open file.
+  FileMode := fmOpenReadWrite;
+  ReWrite(myclipfile,1);
+  SetLength(clipfilearray,len);
+  Move(filearray[a],clipfilearray[0],len); // Copy specified section.
+  BlockWrite(myclipfile,clipfilearray[0],len); // Copy contents of array to file.
+  CloseFile(myclipfile); // Close file.
 end;
 
 { Get byte from file array. }
