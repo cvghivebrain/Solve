@@ -103,7 +103,7 @@ begin
     end;
   while AnsiPos(')',s) <> 0 do
     begin
-    sub := Explode(Explode(s,')',0),'(',-1); // Get contents of brackets.
+    sub := ExplodeFull(Explode(s,')',0),'(',-1); // Get contents of brackets.
     s := ReplaceStr(s,'('+sub+')',InttoStr(DoSum(sub))); // Solve & remove brackets.
     end;
   result := DoSum(s); // Final sum after brackets are gone.
