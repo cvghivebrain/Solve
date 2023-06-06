@@ -97,8 +97,8 @@ begin
     end;
   while AnsiPos(']',s) <> 0 do
     begin
-    sub := Explode(Explode(s,']',0),'[',-1); // Get contents of square brackets.
-    t := AnsiRightStr(Explode(Explode(s,']',0),'[',-2),1); // Get character before bracket (b/w/d/s/a).
+    sub := ExplodeFull(Explode(s,']',0),'[',-1); // Get contents of square brackets.
+    t := AnsiRightStr(ExplodeFull(Explode(s,']',0),'[',-2),1); // Get character before bracket (b/w/d/s/a).
     s := ReplaceStr(s,t+'['+sub+']',InttoStr(Solve2(sub,t))); // Solve & remove brackets.
     end;
   while AnsiPos(')',s) <> 0 do
