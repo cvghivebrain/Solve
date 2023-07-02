@@ -1,105 +1,111 @@
 unit SolveFunc;
 
 interface
-uses StrUtils, SysUtils, ExplodeFunc, CRCFunc, FileFunc;
+uses StrUtils, SysUtils, Math, ExplodeFunc, CRCFunc, FileFunc;
 
 function DoSum(s: string): int64;
+function DoSum2(s: string): int64;
+function DoSum3(num1, num2: string; op: char): string;
 function Solve(s: string): int64;
-function Solve2(s, t: string): int64;
+function Solve2(s: string): int64;
 function SolveStr(s: string): string;
 function SolveHex(s: string): string;
 
 var
-  customarray: array[0..1000] of int64;
   val: int64;
 
 implementation
 
-{ Convert a string sum (e.g. '1+1') to integer. }
+{ Convert an expression (e.g. '1+1') to integer. }
 
 function DoSum(s: string): int64;
-var i, r: int64;
-  sub: string;
+label istrue;
 begin
-  s := ReplaceStr(s,' ',''); // Strip spaces.
-  s := ReplaceStr(s,'<<','?L'); // Replace << to avoid clash with <.
-  s := ReplaceStr(s,'>>','?R'); // Replace >> to avoid clash with >.
-  s := ReplaceStr(s,'fs',IntToStr(Length(filearray))); // Replace fs with file size.
-  s := ReplaceStr(s,'val',IntToStr(val)); // Replace val with predefined value.
-  if AnsiPos('>=',s) <> 0 then // Compare sides if string contains gte sign.
-    if DoSum(Explode(s,'>=',0)) >= DoSum(Explode(s,'>=',1)) then s := '1' // 1 for greater than or equal.
-    else s := '0'; // 0 for less.
-  if AnsiPos('<=',s) <> 0 then // Compare sides if string contains lte sign.
-    if DoSum(Explode(s,'<=',0)) <= DoSum(Explode(s,'<=',1)) then s := '1' // 1 for less than or equal.
-    else s := '0'; // 0 for greater.
-  if AnsiPos('=',s) <> 0 then // Compare sides if string contains equal sign.
-    if DoSum(Explode(s,'=',0)) = DoSum(Explode(s,'=',1)) then s := '1' // 1 for equal.
-    else s := '0'; // 0 for different.
-  if AnsiPos('<>',s) <> 0 then // Compare sides if string contains inequal sign.
-    if DoSum(Explode(s,'<>',0)) <> DoSum(Explode(s,'<>',1)) then s := '1' // 1 for inequal.
-    else s := '0'; // 0 for same.
-  if AnsiPos('>',s) <> 0 then // Compare sides if string contains greater than sign.
-    if DoSum(Explode(s,'>',0)) > DoSum(Explode(s,'>',1)) then s := '1' // 1 for greater than.
-    else s := '0'; // 0 for less.
-  if AnsiPos('<',s) <> 0 then // Compare sides if string contains less than sign.
-    if DoSum(Explode(s,'<',0)) < DoSum(Explode(s,'<',1)) then s := '1' // 1 for less than.
-    else s := '0'; // 0 for greater.
-  // Insert separator characters.
-  s := ReplaceStr(s,'-','?-');
-  s := ReplaceStr(s,'+','?+');
-  s := ReplaceStr(s,'*','?*');
-  s := ReplaceStr(s,'/','?/');
-  s := ReplaceStr(s,'&','?&'); // AND
-  s := ReplaceStr(s,'^','?^'); // XOR
-  s := ReplaceStr(s,'|','?|'); // OR
-  s := ReplaceStr(s,'%','?%'); // Modulo
-  // Allow negative numbers.
-  s := ReplaceStr(s,'+?-','+-');
-  s := ReplaceStr(s,'-?-','+');
-  s := ReplaceStr(s,'*?-','*-');
-  s := ReplaceStr(s,'/?-','/-');
-  s := ReplaceStr(s,'&?-','&-');
-  s := ReplaceStr(s,'^?-','^-');
-  s := ReplaceStr(s,'|?-','|-');
-  s := ReplaceStr(s,'%?-','%-');
-  s := ReplaceStr(s,'L?-','L-');
-  s := ReplaceStr(s,'R?-','R-');
-  if Copy(s,1,2) = '?-' then s := '0'+s; // Insert 0 at start if sum starts with -.
-  i := 0;
-  r := StrtoInt64(Explode(s,'?',0));
-  while Explode(s,'?',i) <> '' do
+  s := AnsiUpperCase(ReplaceStr(s,' ','')); // Strip spaces and make it uppercase.
+  s := ReplaceStr(s,'0X','$'); // Convert C++ hex prefix to Delphi/assembly.
+  s := ReplaceStr(s,'<<','L'); // Replace << to avoid clash with <.
+  s := ReplaceStr(s,'>>','R'); // Replace >> to avoid clash with >.
+  if (AnsiPos('=',s) > 0) or (AnsiPos('<',s) > 0) or (AnsiPos('>',s) > 0) then // Check for conditional.
     begin
-    sub := Explode(s,'?',i); // Get substring.
-    if Copy(sub,1,1) = '+' then r := r+StrtoInt64(Explode(sub,'+',1)) // If +, add it.
-    else if Copy(sub,1,1) = '-' then r := r-StrtoInt64(Explode(sub,'-',1))
-    else if Copy(sub,1,1) = '*' then r := r*StrtoInt64(Explode(sub,'*',1))
-    else if Copy(sub,1,1) = '/' then r := r div StrtoInt64(Explode(sub,'/',1))
-    else if Copy(sub,1,1) = '&' then r := r and StrtoInt64(Explode(sub,'&',1))
-    else if Copy(sub,1,1) = '|' then r := r or StrtoInt64(Explode(sub,'|',1))
-    else if Copy(sub,1,1) = '^' then r := r xor StrtoInt64(Explode(sub,'^',1))
-    else if Copy(sub,1,1) = '%' then r := r mod StrtoInt64(Explode(sub,'%',1))
-    else if Copy(sub,1,1) = 'L' then r := r shl StrtoInt64(Explode(sub,'L',1))
-    else if Copy(sub,1,1) = 'R' then r := r shr StrtoInt64(Explode(sub,'R',1));
-    inc(i);
+    result := 1; // Assume condition is satisfied.
+    if AnsiPos('>=',s) > 0 then
+      if DoSum2(Explode(s,'>=',0)) >= DoSum2(Explode(s,'>=',1)) then exit; // 1 for greater than or equal.
+    if AnsiPos('<=',s) > 0 then
+      if DoSum2(Explode(s,'<=',0)) <= DoSum2(Explode(s,'<=',1)) then exit; // 1 for less than or equal.
+    if AnsiPos('=',s) > 0 then
+      if DoSum2(Explode(s,'=',0)) = DoSum2(Explode(s,'=',1)) then exit; // 1 for equal.
+    if AnsiPos('<>',s) > 0 then
+      if DoSum2(Explode(s,'<>',0)) <> DoSum2(Explode(s,'<>',1)) then exit; // 1 for inequal.
+    if AnsiPos('>',s) > 0 then
+      if DoSum2(Explode(s,'>',0)) > DoSum2(Explode(s,'>',1)) then exit; // 1 for greater than.
+    if AnsiPos('<',s) > 0 then
+      if DoSum2(Explode(s,'<',0)) < DoSum2(Explode(s,'<',1)) then exit; // 1 for less than.
+    result := 0; // Condition was not satisfied.
+    end
+  else result := DoSum2(s);
+end;
+
+function DoSum2(s: string): int64;
+var i: integer;
+  num1, num2, op: string;
+begin
+  num1 := '';
+  num2 := '';
+  op := '';
+  for i := 1 to Length(s) do
+    begin
+    if AnsiPos(s[i],'0123456789ABCDEF$') > 0 then // Check if character is digit or operator.
+      begin
+      if op = '' then num1 := num1+s[i] // Add to first number.
+      else num2 := num2+s[i]; // Add to second number if operator is set.
+      end
+    else
+      begin
+      if op <> '' then
+        begin
+        num1 := DoSum3(num1,num2,op[1]); // Perform operation and put result in num1.
+        num2 := ''; // Clear second number.
+        end;
+      op := s[i]; // Next operator.
+      end;
     end;
-  result := r;
+  if op <> '' then result := StrToInt64(DoSum3(num1,num2,op[1]))
+  else result := StrToInt64(num1); // Return  single number if no operator is present.
+end;
+
+function DoSum3(num1, num2: string; op: char): string;
+begin
+  case Ord(op) of
+  Ord('+'): result := IntToStr(StrToInt64(num1)+StrToInt64(num2));
+  Ord('-'): result := IntToStr(StrToInt64(num1)-StrToInt64(num2));
+  Ord('*'): result := IntToStr(StrToInt64(num1)*StrToInt64(num2));
+  Ord('/'): result := IntToStr(StrToInt64(num1) div StrToInt64(num2));
+  Ord('\'): result := IntToStr(Ceil(StrToInt64(num1)/StrToInt64(num2))); // Division rounding up.
+  Ord('&'): result := IntToStr(StrToInt64(num1) and StrToInt64(num2));
+  Ord('|'): result := IntToStr(StrToInt64(num1) or StrToInt64(num2));
+  Ord('^'): result := IntToStr(StrToInt64(num1) xor StrToInt64(num2));
+  Ord('%'): result := IntToStr(StrToInt64(num1) mod StrToInt64(num2));
+  Ord('L'): result := IntToStr(StrToInt64(num1) shl StrToInt64(num2));
+  Ord('R'): result := IntToStr(StrToInt64(num1) shr StrToInt64(num2));
+  end;
 end;
 
 { Convert sum with brackets to integer. }
 
 function Solve(s: string): int64;
-var sub, t: string;
+var sub: string;
 begin
+  s := ReplaceStr(s,'{filesize}',IntToStr(Length(filearray))); // Insert file size.
+  s := ReplaceStr(s,'{val}',IntToStr(val)); // Insert predefined value.
   while AnsiPos('"',s) <> 0 do
     begin
     sub := Explode(s,'"',1); // Get contents of quotes.
     s := ReplaceStr(s,'"'+sub+'"','$'+CRCString(sub)); // Replace string with CRC32.
     end;
-  while AnsiPos(']',s) <> 0 do
+  while AnsiPos('}',s) <> 0 do
     begin
-    sub := ExplodeFull(Explode(s,']',0),'[',-1); // Get contents of square brackets.
-    t := AnsiRightStr(ExplodeFull(Explode(s,']',0),'[',-2),1); // Get character before bracket (b/w/d/s/a).
-    s := ReplaceStr(s,t+'['+sub+']',InttoStr(Solve2(sub,t))); // Solve & remove brackets.
+    sub := ExplodeFull(Explode(s,'}',0),'{',-1); // Get contents of curly brackets.
+    s := ReplaceStr(s,'{'+sub+'}',InttoStr(Solve2(sub))); // Solve & remove brackets.
     end;
   while AnsiPos(')',s) <> 0 do
     begin
@@ -109,19 +115,23 @@ begin
   result := DoSum(s); // Final sum after brackets are gone.
 end;
 
-function Solve2(s, t: string): int64; // Get data from file array.
-var stringaddr, stringmax: int64;
+function Solve2(s: string): int64; // Get data from file array.
+var t: string;
+  param1, param2: int64;
 begin
+  t := Explode(s,':',0); // Get type (e.g. "b" for byte).
+  Delete(s,1,Length(t)+1); // Remove type from input string.
   if t = 'b' then result := filearray[Solve(s)] // Return byte from file array.
   else if t = 'w' then result := GetWord(Solve(s)) // Return word.
+  else if t = 'W' then result := GetWordRev(Solve(s)) // Return word (byteswapped).
   else if t = 'd' then result := GetDWord(Solve(s)) // Return longword.
+  else if t = 'D' then result := GetDWordRev(Solve(s)) // Return longword (byteswapped).
   else if t = 's' then
     begin
-    stringaddr := Solve(Explode(s,',',0));
-    stringmax := Solve(Explode(s,',',1));
-    result := StrtoInt64('$'+CRCString(GetString(stringaddr,stringmax))); // Return CRC32 of string.
+    param1 := Solve(Explode(s,',',0)); // Get string address.
+    param2 := Solve(Explode(s,',',1)); // Get max length.
+    result := StrtoInt64('$'+CRCString(GetString(param1,param2))); // Return CRC32 of string.
     end
-  else if t = 'a' then result := customarray[Solve(s)] // Return integer from array.
   else result := 0; // Return nothing.
 end;
 

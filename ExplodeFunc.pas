@@ -13,6 +13,7 @@ implementation
 function Explode(str, delimiter: string; n: integer): string; // Get substring from string using delimiter.
 begin
   if (AnsiPos(delimiter,str) = 0) and ((n = 0) or (n = -1)) then result := str // Output full string if delimiter not found.
+  //else if AnsiPos(delimiter,str) = 0 then result := ''
   else
     begin
     str := str+delimiter;

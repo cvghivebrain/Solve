@@ -27,6 +27,8 @@ implementation
 
 procedure TForm1.btnGoClick(Sender: TObject);
 begin
+  SetLength(filearray,1);
+  filearray[0] := 69;
   memOutput.Clear;
   val := 999;
   memOutput.Lines.Add(SolveStr(editInput.Text));
