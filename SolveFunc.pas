@@ -24,8 +24,9 @@ label istrue;
 begin
   s := AnsiUpperCase(ReplaceStr(s,' ','')); // Strip spaces and make it uppercase.
   s := ReplaceStr(s,'0X','$'); // Convert C++ hex prefix to Delphi/assembly.
-  s := ReplaceStr(s,'<<','L'); // Replace << to avoid clash with <.
-  s := ReplaceStr(s,'>>','R'); // Replace >> to avoid clash with >.
+  s := ReplaceStr(s,'<<','L'); // Replace << (shift left) to avoid clash with <.
+  s := ReplaceStr(s,'>>','R'); // Replace >> (shift right) to avoid clash with >.
+  s := ReplaceStr(s,'**','P'); // Replace ** (exponent) to avoid clash with *.
   if (AnsiPos('=',s) > 0) or (AnsiPos('<',s) > 0) or (AnsiPos('>',s) > 0) then // Check for conditional.
     begin
     result := 1; // Assume condition is satisfied.
@@ -99,6 +100,7 @@ begin
   Ord('%'): result := IntToStr(n1 mod n2);
   Ord('L'): result := IntToStr(n1 shl n2);
   Ord('R'): result := IntToStr(n1 shr n2);
+  Ord('P'): result := IntToStr(Floor(Power(n1,n2)));
   end;
 end;
 
@@ -119,15 +121,15 @@ var sub: string;
 begin
   s := ReplaceStr(s,'{filesize}',IntToStr(Length(filearray))); // Insert file size.
   s := ReplaceStr(s,'{val}',IntToStr(val)); // Insert predefined value.
-  while AnsiPos('"',s) <> 0 do
-    begin
-    sub := Explode(s,'"',1); // Get contents of quotes.
-    s := ReplaceStr(s,'"'+sub+'"','$'+CRCString(sub)); // Replace string with CRC32.
-    end;
   while AnsiPos('}',s) <> 0 do
     begin
     sub := ExplodeFull(Explode(s,'}',0),'{',-1); // Get contents of curly brackets.
     s := ReplaceStr(s,'{'+sub+'}',InttoStr(Solve2(sub))); // Solve & remove brackets.
+    end;
+  while AnsiPos('"',s) <> 0 do
+    begin
+    sub := Explode(s,'"',1); // Get contents of quotes.
+    s := ReplaceStr(s,'"'+sub+'"','$'+CRCString(sub)); // Replace string with CRC32.
     end;
   while AnsiPos(')',s) <> 0 do
     begin
@@ -138,8 +140,9 @@ begin
 end;
 
 function Solve2(s: string): int64; // Get data from file array.
-var t: string;
+var t, str: string;
   param1, param2: int64;
+  i: integer;
 begin
   t := Explode(s,':',0); // Get type (e.g. "b" for byte).
   Delete(s,1,Length(t)+1); // Remove type from input string.
@@ -153,6 +156,19 @@ begin
     param1 := Solve(Explode(s,',',0)); // Get string address.
     param2 := Solve(Explode(s,',',1)); // Get max length.
     result := StrtoInt64('$'+CRCString(GetString(param1,param2))); // Return CRC32 of string.
+    end
+  else if t = 'find' then
+    begin
+    param1 := Solve(Explode(s,',',0)); // Get start address.
+    param2 := Solve(Explode(s,',',1)); // Get end address.
+    str := Explode(s,'"',1); // Get string to search for.
+    for i := param1 to param2-Length(str) do
+      if GetString(i,Length(str)) = str then
+        begin
+        result := i; // Return address where string was found.
+        exit; // Stop searching.
+        end;
+    result := -1; // String was not found.
     end
   else result := 0; // Return nothing.
 end;
