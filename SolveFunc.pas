@@ -6,6 +6,7 @@ uses StrUtils, SysUtils, Math, ExplodeFunc, CRCFunc, FileFunc;
 function DoSum(s: string): int64;
 function DoSum2(s: string): int64;
 function DoSum3(num1, num2: string; op: char): string;
+function BinToInt(s: string): int64;
 function Solve(s: string): int64;
 function Solve2(s: string): int64;
 function SolveStr(s: string): string;
@@ -59,6 +60,8 @@ begin
       if op = '' then num1 := num1+s[i] // Add to first number.
       else num2 := num2+s[i]; // Add to second number if operator is set.
       end
+    else if (AnsiPos(s[i],'-%') > 0) and (num1 = '') then num1 := s[i] // Check for number prefix.
+    else if (AnsiPos(s[i],'-%') > 0) and (op <> '') and (num2 = '') then num2 := s[i]
     else
       begin
       if op <> '' then
@@ -70,24 +73,43 @@ begin
       end;
     end;
   if op <> '' then result := StrToInt64(DoSum3(num1,num2,op[1]))
-  else result := StrToInt64(num1); // Return  single number if no operator is present.
+  else
+    begin
+    if num1[1] = '%' then result := BinToInt(num1)
+    else result := StrToInt64(num1); // Return single number if no operator is present.
+    end;
 end;
 
 function DoSum3(num1, num2: string; op: char): string;
+var n1, n2: int64;
 begin
+  if num1[1] = '%' then n1 := BinToInt(num1) // Convert from binary.
+  else n1 := StrToInt64(num1);
+  if num2[1] = '%' then n2 := BinToInt(num2)
+  else n2 := StrToInt64(num2);
   case Ord(op) of
-  Ord('+'): result := IntToStr(StrToInt64(num1)+StrToInt64(num2));
-  Ord('-'): result := IntToStr(StrToInt64(num1)-StrToInt64(num2));
-  Ord('*'): result := IntToStr(StrToInt64(num1)*StrToInt64(num2));
-  Ord('/'): result := IntToStr(StrToInt64(num1) div StrToInt64(num2));
-  Ord('\'): result := IntToStr(Ceil(StrToInt64(num1)/StrToInt64(num2))); // Division rounding up.
-  Ord('&'): result := IntToStr(StrToInt64(num1) and StrToInt64(num2));
-  Ord('|'): result := IntToStr(StrToInt64(num1) or StrToInt64(num2));
-  Ord('^'): result := IntToStr(StrToInt64(num1) xor StrToInt64(num2));
-  Ord('%'): result := IntToStr(StrToInt64(num1) mod StrToInt64(num2));
-  Ord('L'): result := IntToStr(StrToInt64(num1) shl StrToInt64(num2));
-  Ord('R'): result := IntToStr(StrToInt64(num1) shr StrToInt64(num2));
+  Ord('+'): result := IntToStr(n1+n2);
+  Ord('-'): result := IntToStr(n1-n2);
+  Ord('*'): result := IntToStr(n1*n2);
+  Ord('/'): result := IntToStr(n1 div n2);
+  Ord('\'): result := IntToStr(Ceil(n1/n2)); // Division rounding up.
+  Ord('&'): result := IntToStr(n1 and n2);
+  Ord('|'): result := IntToStr(n1 or n2);
+  Ord('^'): result := IntToStr(n1 xor n2);
+  Ord('%'): result := IntToStr(n1 mod n2);
+  Ord('L'): result := IntToStr(n1 shl n2);
+  Ord('R'): result := IntToStr(n1 shr n2);
   end;
+end;
+
+{ Convert binary number with % prefix to integer. }
+
+function BinToInt(s: string): int64;
+var i: integer;
+begin
+  result := 0;
+  for i := 2 to Length(s) do
+    result := (result shl 1)+Ord(s[i])-48;
 end;
 
 { Convert sum with brackets to integer. }
