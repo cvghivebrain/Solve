@@ -149,6 +149,8 @@ begin
   if t = 'b' then result := filearray[Solve(s)] // Return byte from file array.
   else if t = 'w' then result := GetWord(Solve(s)) // Return word.
   else if t = '_w' then result := GetWordRev(Solve(s)) // Return word (byteswapped).
+  else if t = 't' then result := (GetWord(Solve(s)) shl 8)+GetByte(Solve(s)+2) // Return 3 bytes.
+  else if t = '_t' then result := GetWordRev(Solve(s))+(GetByte(Solve(s)+2) shl 16) // Return 3 bytes (byteswapped).
   else if t = 'd' then result := GetDWord(Solve(s)) // Return longword.
   else if t = '_d' then result := GetDWordRev(Solve(s)) // Return longword (byteswapped).
   else if t = 's' then

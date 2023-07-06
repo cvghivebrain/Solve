@@ -31,8 +31,10 @@ Symbol | Description
 ```"str"``` | String (actually processed as CRC32 of string)
 ```{b:x}``` | Read byte from address ```x```
 ```{w:x}``` | Read word from address ```x```
+```{t:x}``` | Read 3 bytes from address ```x```
 ```{d:x}``` | Read longword from address ```x```
 ```{_w:x}``` | Read reversed (little-endian) word from address ```x```
+```{_t:x}``` | Read reversed (little-endian) 3 bytes from address ```x```
 ```{_d:x}``` | Read reversed (little-endian) longword from address ```x```
 ```{s:x,y}``` | Read string from address ```x``` with maximum length ```y```
 ```{find:x,y,"str"}``` | Find location of string between the addresses ```x``` and ```y``` (returns -1 if not found)
