@@ -148,9 +148,9 @@ begin
   Delete(s,1,Length(t)+1); // Remove type from input string.
   if t = 'b' then result := filearray[Solve(s)] // Return byte from file array.
   else if t = 'w' then result := GetWord(Solve(s)) // Return word.
-  else if t = 'W' then result := GetWordRev(Solve(s)) // Return word (byteswapped).
+  else if t = '_w' then result := GetWordRev(Solve(s)) // Return word (byteswapped).
   else if t = 'd' then result := GetDWord(Solve(s)) // Return longword.
-  else if t = 'D' then result := GetDWordRev(Solve(s)) // Return longword (byteswapped).
+  else if t = '_d' then result := GetDWordRev(Solve(s)) // Return longword (byteswapped).
   else if t = 's' then
     begin
     param1 := Solve(Explode(s,',',0)); // Get string address.
