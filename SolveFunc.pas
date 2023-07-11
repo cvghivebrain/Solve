@@ -31,17 +31,29 @@ begin
     begin
     result := 1; // Assume condition is satisfied.
     if AnsiPos('>=',s) > 0 then
+      begin
       if DoSum2(Explode(s,'>=',0)) >= DoSum2(Explode(s,'>=',1)) then exit; // 1 for greater than or equal.
-    if AnsiPos('<=',s) > 0 then
+      end
+    else if AnsiPos('<=',s) > 0 then
+      begin
       if DoSum2(Explode(s,'<=',0)) <= DoSum2(Explode(s,'<=',1)) then exit; // 1 for less than or equal.
-    if AnsiPos('=',s) > 0 then
+      end
+    else if AnsiPos('=',s) > 0 then
+      begin
       if DoSum2(Explode(s,'=',0)) = DoSum2(Explode(s,'=',1)) then exit; // 1 for equal.
-    if AnsiPos('<>',s) > 0 then
+      end
+    else if AnsiPos('<>',s) > 0 then
+      begin
       if DoSum2(Explode(s,'<>',0)) <> DoSum2(Explode(s,'<>',1)) then exit; // 1 for inequal.
-    if AnsiPos('>',s) > 0 then
+      end
+    else if AnsiPos('>',s) > 0 then
+      begin
       if DoSum2(Explode(s,'>',0)) > DoSum2(Explode(s,'>',1)) then exit; // 1 for greater than.
-    if AnsiPos('<',s) > 0 then
+      end
+    else if AnsiPos('<',s) > 0 then
+      begin
       if DoSum2(Explode(s,'<',0)) < DoSum2(Explode(s,'<',1)) then exit; // 1 for less than.
+      end;
     result := 0; // Condition was not satisfied.
     end
   else result := DoSum2(s);
