@@ -1,7 +1,7 @@
 unit SolveFunc;
 
 interface
-uses StrUtils, SysUtils, Math, ExplodeFunc, CRCFunc, FileFunc;
+uses StrUtils, SysUtils, Dialogs, Math, ExplodeFunc, CRCFunc, FileFunc;
 
 function DoSum(s: string): int64;
 function DoSum2(s: string): int64;
@@ -129,26 +129,32 @@ end;
 { Convert sum with brackets to integer. }
 
 function Solve(s: string): int64;
-var sub: string;
+var sub, scopy: string;
 begin
+  scopy := s;
   s := ReplaceStr(s,'{filesize}',IntToStr(Length(filearray))); // Insert file size.
   s := ReplaceStr(s,'{val}',IntToStr(val)); // Insert predefined value.
-  while AnsiPos('}',s) <> 0 do
-    begin
-    sub := ExplodeFull(Explode(s,'}',0),'{',-1); // Get contents of curly brackets.
-    s := ReplaceStr(s,'{'+sub+'}',InttoStr(Solve2(sub))); // Solve & remove brackets.
-    end;
-  while AnsiPos('"',s) <> 0 do
-    begin
-    sub := Explode(s,'"',1); // Get contents of quotes.
-    s := ReplaceStr(s,'"'+sub+'"','$'+CRCString(sub)); // Replace string with CRC32.
-    end;
-  while AnsiPos(')',s) <> 0 do
-    begin
-    sub := ExplodeFull(Explode(s,')',0),'(',-1); // Get contents of brackets.
-    s := ReplaceStr(s,'('+sub+')',InttoStr(DoSum(sub))); // Solve & remove brackets.
-    end;
-  result := DoSum(s); // Final sum after brackets are gone.
+  try
+    while AnsiPos('}',s) <> 0 do
+      begin
+      sub := ExplodeFull(Explode(s,'}',0),'{',-1); // Get contents of curly brackets.
+      s := ReplaceStr(s,'{'+sub+'}',InttoStr(Solve2(sub))); // Solve & remove brackets.
+      end;
+    while AnsiPos('"',s) <> 0 do
+      begin
+      sub := Explode(s,'"',1); // Get contents of quotes.
+      s := ReplaceStr(s,'"'+sub+'"','$'+CRCString(sub)); // Replace string with CRC32.
+      end;
+    while AnsiPos(')',s) <> 0 do
+      begin
+      sub := ExplodeFull(Explode(s,')',0),'(',-1); // Get contents of brackets.
+      s := ReplaceStr(s,'('+sub+')',InttoStr(DoSum(sub))); // Solve & remove brackets.
+      end;
+    result := DoSum(s); // Final sum after brackets are gone.
+  except
+    ShowMessage(scopy+' is not a valid expression.');
+    result := 0;
+  end;
 end;
 
 function Solve2(s: string): int64; // Get data from file array.
