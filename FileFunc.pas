@@ -17,6 +17,7 @@ function GetDword(a: int64): longword;
 function GetWordRev(a: int64): word;
 function GetDwordRev(a: int64): longword;
 function GetString(a, maxlength: int64): string;
+function GetStrInt(a, maxlength: int64): string;
 procedure WriteByte(a: int64; b: byte);
 procedure WriteWord(a: int64; w: word);
 procedure WriteWordRev(a: int64; w: word);
@@ -172,6 +173,21 @@ begin
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
     end;
+end;
+
+{ Get string integer from file array. }
+
+function GetStrInt(a, maxlength: int64): string;
+begin
+  result := '';
+  while maxlength > 0 do
+    begin
+    Dec(maxlength);
+    if GetByte(a) in [48..57] then result := result+Chr(GetByte(a)) // Add character to string if valid.
+    else maxlength := 0; // Otherwise end the string.
+    Inc(a); // Next character.
+    end;
+  if result = '' then result := '0'; // Return 0 if no string is found.
 end;
 
 { Write single byte to file array. }

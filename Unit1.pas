@@ -29,8 +29,10 @@ procedure TForm1.btnGoClick(Sender: TObject);
 begin
   SetLength(filearray,3);
   filearray[0] := 0;
-  filearray[1] := Ord('F');
-  filearray[2] := Ord('U');
+  filearray[1] := Ord('5');
+  filearray[2] := Ord('5');
+  filearray[3] := 0;
+  fs := 4;
   memOutput.Clear;
   val := 999;
   memOutput.Lines.Add(SolveStr(editInput.Text));

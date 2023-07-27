@@ -13,6 +13,8 @@ Symbol | Description
 ```*``` | Multiplication
 ```/``` | Division (integer, rounded down)
 ```\``` | Division (integer, rounded up)
+```R``` | Round up to nearest multiple (e.g. ```7R5 = 10```)
+```r``` | Round down to nearest multiple
 ```%``` | Modulo (also used as a prefix for binary integers)
 <tt>&vert;</tt> | OR
 ```&``` | AND
@@ -36,7 +38,8 @@ Symbol | Description
 ```{_w:x}``` | Read reversed (little-endian) word from address ```x```
 ```{_t:x}``` | Read reversed (little-endian) 3 bytes from address ```x```
 ```{_d:x}``` | Read reversed (little-endian) longword from address ```x```
-```{s:x,y}``` | Read string from address ```x``` with maximum length ```y```
+```{s:x,y}``` | Read string from address ```x``` with maximum length ```y``` (returns CRC32 of string)
+```{i:x,y}``` | Read string integer from address ```x``` with maximum length ```y``` (returns integer itself, or 0 if not found)
 ```{find:x,y,"str"}``` | Find location of string between the addresses ```x``` and ```y``` (returns -1 if not found)
 ```{filesize}``` | Size of loaded file in bytes (0 if no file is loaded)
 ```{val}``` | Value stored in the variable ```val```

@@ -22,10 +22,10 @@ implementation
 function DoSum(s: string): int64;
 label istrue;
 begin
-  s := AnsiUpperCase(ReplaceStr(s,' ','')); // Strip spaces and make it uppercase.
-  s := ReplaceStr(s,'0X','$'); // Convert C++ hex prefix to Delphi/assembly.
+  s := ReplaceStr(s,' ',''); // Strip spaces and make it uppercase.
+  s := ReplaceStr(s,'0x','$'); // Convert C++ hex prefix to Delphi/assembly.
   s := ReplaceStr(s,'<<','L'); // Replace << (shift left) to avoid clash with <.
-  s := ReplaceStr(s,'>>','R'); // Replace >> (shift right) to avoid clash with >.
+  s := ReplaceStr(s,'>>','l'); // Replace >> (shift right) to avoid clash with >.
   s := ReplaceStr(s,'**','P'); // Replace ** (exponent) to avoid clash with *.
   if (AnsiPos('=',s) > 0) or (AnsiPos('<',s) > 0) or (AnsiPos('>',s) > 0) then // Check for conditional.
     begin
@@ -68,7 +68,7 @@ begin
   op := '';
   for i := 1 to Length(s) do
     begin
-    if AnsiPos(s[i],'0123456789ABCDEF$') > 0 then // Check if character is digit or operator.
+    if AnsiPos(s[i],'0123456789ABCDEFabcdef$') > 0 then // Check if character is digit or operator.
       begin
       if op = '' then num1 := num1+s[i] // Add to first number.
       else num2 := num2+s[i]; // Add to second number if operator is set.
@@ -106,12 +106,14 @@ begin
   Ord('*'): result := IntToStr(n1*n2);
   Ord('/'): result := IntToStr(n1 div n2);
   Ord('\'): result := IntToStr(Ceil(n1/n2)); // Division rounding up.
+  Ord('R'): result := IntToStr(Ceil(n1/n2)*n2); // Round up to multiple of n2.
+  Ord('r'): result := IntToStr((n1 div n2)*n2); // Round down to multiple of n2.
   Ord('&'): result := IntToStr(n1 and n2);
   Ord('|'): result := IntToStr(n1 or n2);
   Ord('^'): result := IntToStr(n1 xor n2);
   Ord('%'): result := IntToStr(n1 mod n2);
   Ord('L'): result := IntToStr(n1 shl n2);
-  Ord('R'): result := IntToStr(n1 shr n2);
+  Ord('l'): result := IntToStr(n1 shr n2);
   Ord('P'): result := IntToStr(Floor(Power(n1,n2)));
   end;
 end;
@@ -176,6 +178,12 @@ begin
     param1 := Solve(Explode(s,',',0)); // Get string address.
     param2 := Solve(Explode(s,',',1)); // Get max length.
     result := StrtoInt64('$'+CRCString(GetString(param1,param2))); // Return CRC32 of string.
+    end
+  else if t = 'i' then
+    begin
+    param1 := Solve(Explode(s,',',0)); // Get string address.
+    param2 := Solve(Explode(s,',',1)); // Get max length.
+    result := StrtoInt64(GetStrInt(param1,param2)); // Return string as integer.
     end
   else if t = 'find' then
     begin
