@@ -17,6 +17,7 @@ function GetDword(a: int64): longword;
 function GetWordRev(a: int64): word;
 function GetDwordRev(a: int64): longword;
 function GetString(a, maxlength: int64): string;
+function GetStringWide(a, maxlength, w: int64): string;
 function GetStrInt(a, maxlength: int64): string;
 procedure WriteByte(a: int64; b: byte);
 procedure WriteWord(a: int64; w: word);
@@ -172,6 +173,20 @@ begin
     if GetByte(a) in [32..126] then result := result+Chr(GetByte(a)) // Add character to string if valid.
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
+    end;
+end;
+
+{ As above, but allows for spaces between each letter. }
+
+function GetStringWide(a, maxlength, w: int64): string;
+begin
+  result := '';
+  while maxlength > 0 do
+    begin
+    Dec(maxlength);
+    if GetByte(a) in [32..126] then result := result+Chr(GetByte(a)) // Add character to string if valid.
+    else maxlength := 0; // Otherwise end the string.
+    a := a+w; // Next character.
     end;
 end;
 

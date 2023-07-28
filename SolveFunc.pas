@@ -22,7 +22,7 @@ implementation
 function DoSum(s: string): int64;
 label istrue;
 begin
-  s := ReplaceStr(s,' ',''); // Strip spaces and make it uppercase.
+  s := ReplaceStr(s,' ',''); // Strip spaces.
   s := ReplaceStr(s,'0x','$'); // Convert C++ hex prefix to Delphi/assembly.
   s := ReplaceStr(s,'<<','L'); // Replace << (shift left) to avoid clash with <.
   s := ReplaceStr(s,'>>','l'); // Replace >> (shift right) to avoid clash with >.
@@ -166,7 +166,7 @@ var t, str: string;
 begin
   t := Explode(s,':',0); // Get type (e.g. "b" for byte).
   Delete(s,1,Length(t)+1); // Remove type from input string.
-  if t = 'b' then result := filearray[Solve(s)] // Return byte from file array.
+  if t = 'b' then result := GetByte(Solve(s)) // Return byte from file array.
   else if t = 'w' then result := GetWord(Solve(s)) // Return word.
   else if t = '_w' then result := GetWordRev(Solve(s)) // Return word (byteswapped).
   else if t = 't' then result := (GetWord(Solve(s)) shl 8)+GetByte(Solve(s)+2) // Return 3 bytes.
@@ -178,6 +178,12 @@ begin
     param1 := Solve(Explode(s,',',0)); // Get string address.
     param2 := Solve(Explode(s,',',1)); // Get max length.
     result := StrtoInt64('$'+CRCString(GetString(param1,param2))); // Return CRC32 of string.
+    end
+  else if t = 'S' then
+    begin
+    param1 := Solve(Explode(s,',',0)); // Get string address.
+    param2 := Solve(Explode(s,',',1)); // Get max length.
+    result := StrtoInt64('$'+CRCString(GetStringWide(param1,param2,2))); // Return CRC32 of string.
     end
   else if t = 'i' then
     begin
