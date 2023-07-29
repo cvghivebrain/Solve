@@ -39,6 +39,7 @@ Symbol | Description
 ```{_t:x}``` | Read reversed (little-endian) 3 bytes from address ```x```
 ```{_d:x}``` | Read reversed (little-endian) longword from address ```x```
 ```{s:x,y}``` | Read string from address ```x``` with maximum length ```y``` (returns CRC32 of string)
+```{s:x,y,z}``` | As above, but ```z-1``` bytes are skipped between each character
 ```{i:x,y}``` | Read string integer from address ```x``` with maximum length ```y``` (returns integer itself, or 0 if not found)
 ```{find:x,y,"str"}``` | Find location of string between the addresses ```x``` and ```y``` (returns -1 if not found)
 ```{filesize}``` | Size of loaded file in bytes (0 if no file is loaded)

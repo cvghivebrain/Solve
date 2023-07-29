@@ -160,7 +160,7 @@ begin
 end;
 
 function Solve2(s: string): int64; // Get data from file array.
-var t, str: string;
+var t, str, param3: string;
   param1, param2: int64;
   i: integer;
 begin
@@ -177,13 +177,9 @@ begin
     begin
     param1 := Solve(Explode(s,',',0)); // Get string address.
     param2 := Solve(Explode(s,',',1)); // Get max length.
-    result := StrtoInt64('$'+CRCString(GetString(param1,param2))); // Return CRC32 of string.
-    end
-  else if t = 'S' then
-    begin
-    param1 := Solve(Explode(s,',',0)); // Get string address.
-    param2 := Solve(Explode(s,',',1)); // Get max length.
-    result := StrtoInt64('$'+CRCString(GetStringWide(param1,param2,2))); // Return CRC32 of string.
+    param3 := Explode(s,',',2); // Get character width if set.
+    if param3 = '' then result := StrtoInt64('$'+CRCString(GetString(param1,param2))) // Return CRC32 of string.
+    else result := StrtoInt64('$'+CRCString(GetStringWide(param1,param2,Solve(param3)))); // Return CRC32 of string.
     end
   else if t = 'i' then
     begin
