@@ -1,7 +1,17 @@
 unit SolveFunc;
 
+{$DEFINE GUI_APP} // Remove this line for command line programs.
+
 interface
-uses StrUtils, SysUtils, Dialogs, Math, ExplodeFunc, CRCFunc, FileFunc;
+uses StrUtils,
+  SysUtils,
+  {$IFDEF GUI_APP}
+  Dialogs,
+  {$ENDIF}
+  Math,
+  ExplodeFunc,
+  CRCFunc,
+  FileFunc;
 
 function DoSum(s: string): int64;
 function DoSum2(s: string): int64;
@@ -154,7 +164,11 @@ begin
       end;
     result := DoSum(s); // Final sum after brackets are gone.
   except
+    {$IFDEF GUI_APP}
     ShowMessage(scopy+' is not a valid expression.');
+    {$ELSE}
+    WriteLn(scopy+' is not a valid expression.');
+    {$ENDIF}
     result := 0;
   end;
 end;
