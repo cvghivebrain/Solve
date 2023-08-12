@@ -193,12 +193,15 @@ end;
 { Get string integer from file array. }
 
 function GetStrInt(a, maxlength: int64): string;
+var b: byte;
 begin
   result := '';
   while maxlength > 0 do
     begin
     Dec(maxlength);
-    if GetByte(a) in [48..57] then result := result+Chr(GetByte(a)) // Add character to string if valid.
+    b := GetByte(a);
+    if b in [48..57] then result := result+Chr(b) // Add character to string if valid.
+    else if (b = 32) and (result = '') then result := result // Ignore leading spaces.
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
     end;

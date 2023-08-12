@@ -28,7 +28,7 @@ implementation
 procedure TForm1.btnGoClick(Sender: TObject);
 begin
   SetLength(filearray,3);
-  filearray[0] := 0;
+  filearray[0] := Ord(' ');
   filearray[1] := Ord('5');
   filearray[2] := Ord('5');
   filearray[3] := 0;
