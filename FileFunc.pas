@@ -1,14 +1,22 @@
 unit FileFunc;
 
+{$DEFINE GUI_APP} // Remove this line for command line programs.
+
 interface
-uses Windows, SysUtils, Dialogs;
+uses Windows,
+  {$IFDEF GUI_APP}
+  Dialogs,
+  {$ENDIF}
+  SysUtils;
 
 procedure LoadFile(openthis: string);
 procedure SaveFile(savethis: string);
+procedure SaveFileOutput(savethis: string);
 procedure ClipFile(a, len: integer; clipthisfile: string);
 procedure NewFile(filelen: integer);
 procedure AddFile(a: integer; addthisfile: string);
 procedure EvenFile;
+procedure EvenFileOutput;
 function GetByte(a: int64): byte;
 function GetBit(a: int64; b: integer): byte;
 function Bit(i, b: integer): byte;
@@ -24,6 +32,11 @@ procedure WriteWord(a: int64; w: word);
 procedure WriteWordRev(a: int64; w: word);
 procedure WriteDword(a: int64; d: longword);
 procedure WriteDwordRev(a: int64; d: longword);
+procedure WriteByteOutput(a: int64; b: byte);
+procedure WriteWordOutput(a: int64; w: word);
+procedure WriteWordRevOutput(a: int64; w: word);
+procedure WriteDwordOutput(a: int64; d: longword);
+procedure WriteDwordRevOutput(a: int64; d: longword);
 procedure RunCommand(command: string);
 function FileInUse(f: string): boolean;
 procedure ListFolders(dir: string; subfolders: boolean);
@@ -31,7 +44,7 @@ procedure ListFiles(dir: string; subfolders: boolean);
 
 var
   myfile: file;
-  filearray: array of byte;
+  filearray, outputarray: array of byte;
   fs: integer;
   folderlist, filelist: array of string;
 
@@ -61,6 +74,15 @@ begin
   FileMode := fmOpenReadWrite;
   ReWrite(myfile,1);
   BlockWrite(myfile,filearray[0],Length(filearray)); // Copy contents of array to file.
+  CloseFile(myfile); // Close file.
+end;
+
+procedure SaveFileOutput(savethis: string);
+begin
+  AssignFile(myfile,savethis); // Open file.
+  FileMode := fmOpenReadWrite;
+  ReWrite(myfile,1);
+  BlockWrite(myfile,outputarray[0],Length(outputarray)); // Copy contents of array to file.
   CloseFile(myfile); // Close file.
 end;
 
@@ -110,6 +132,11 @@ procedure EvenFile;
 begin
   if Odd(fs) then SetLength(filearray,fs+1); // Add 1 byte to end if odd.
   fs := Length(filearray);
+end;
+
+procedure EvenFileOutput;
+begin
+  if Odd(Length(outputarray)) then SetLength(outputarray,Length(outputarray)+1); // Add 1 byte to end if odd.
 end;
 
 { Get byte from file array. }
@@ -217,6 +244,12 @@ begin
   fs := Length(filearray);
 end;
 
+procedure WriteByteOutput(a: int64; b: byte);
+begin
+  if Length(outputarray) < a+1 then SetLength(outputarray,a+1); // Enlarge file if needed.
+  outputarray[a] := b;
+end;
+
 { Write word to file array. }
 
 procedure WriteWord(a: int64; w: word);
@@ -225,6 +258,13 @@ begin
   filearray[a] := w shr 8;
   filearray[a+1] := w and $FF;
   fs := Length(filearray);
+end;
+
+procedure WriteWordOutput(a: int64; w: word);
+begin
+  if Length(outputarray) < a+2 then SetLength(outputarray,a+2); // Enlarge file if needed.
+  outputarray[a] := w shr 8;
+  outputarray[a+1] := w and $FF;
 end;
 
 { Write word (little endian) to file array. }
@@ -237,6 +277,13 @@ begin
   fs := Length(filearray);
 end;
 
+procedure WriteWordRevOutput(a: int64; w: word);
+begin
+  if Length(outputarray) < a+2 then SetLength(outputarray,a+2); // Enlarge file if needed.
+  outputarray[a+1] := w shr 8;
+  outputarray[a] := w and $FF;
+end;
+
 { Write longword to file array. }
 
 procedure WriteDword(a: int64; d: longword);
@@ -247,6 +294,13 @@ begin
   fs := Length(filearray);
 end;
 
+procedure WriteDwordOutput(a: int64; d: longword);
+begin
+  if Length(outputarray) < a+4 then SetLength(outputarray,a+4); // Enlarge file if needed.
+  WriteWordOutput(a,d shr 16);
+  WriteWordOutput(a+2,d and $FFFF);
+end;
+
 { Write longword (little endian) to file array. }
 
 procedure WriteDwordRev(a: int64; d: longword);
@@ -255,6 +309,13 @@ begin
   WriteWordRev(a+2,d shr 16);
   WriteWordRev(a,d and $FFFF);
   fs := Length(filearray);
+end;
+
+procedure WriteDwordRevOutput(a: int64; d: longword);
+begin
+  if Length(outputarray) < a+4 then SetLength(outputarray,a+4); // Enlarge file if needed.
+  WriteWordRevOutput(a+2,d shr 16);
+  WriteWordRevOutput(a,d and $FFFF);
 end;
 
 { Run an external program. }
@@ -272,7 +333,12 @@ begin
     WaitForSingleObject(ProcInfo.hProcess,INFINITE);
     CloseHandle(ProcInfo.hProcess);
     end
-  else ShowMessage('Failed to execute command: '+SysErrorMessage(GetLastError));
+  else
+    {$IFDEF GUI_APP}
+    ShowMessage('Failed to execute command: '+SysErrorMessage(GetLastError));
+    {$ELSE}
+    WriteLn('Failed to execute command: '+SysErrorMessage(GetLastError));
+    {$ENDIF}
 end;
 
 { Check if a file is in use by another program. }
