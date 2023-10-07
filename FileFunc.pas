@@ -75,6 +75,7 @@ begin
     BlockRead(myfile,filearray[0],FileSize(myfile)); // Copy file to memory.
     CloseFile(myfile); // Close file.
     fs := Length(filearray);
+    fpos := 0;
     end;
 end;
 
