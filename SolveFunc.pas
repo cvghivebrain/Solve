@@ -269,39 +269,43 @@ begin
 end;
 
 function Solve2(s: string): int64; // Get data from file array.
-var t, str, param3: string;
-  param1, param2: int64;
-  i: integer;
+var t, str, p1, p2, chrw: string;
+  a, a2, len: int64;
+  i, fnum: integer;
 begin
   t := Explode(s,':',0); // Get type (e.g. "b" for byte).
-  Delete(s,1,Length(t)+1); // Remove type from input string.
-  if t = 'b' then result := GetByte(Solve(s)) // Return byte from file array.
-  else if t = 'w' then result := GetWord(Solve(s)) // Return word.
-  else if t = '_w' then result := GetWordRev(Solve(s)) // Return word (byteswapped).
-  else if t = 't' then result := (GetWord(Solve(s)) shl 8)+GetByte(Solve(s)+2) // Return 3 bytes.
-  else if t = '_t' then result := GetWordRev(Solve(s))+(GetByte(Solve(s)+2) shl 16) // Return 3 bytes (byteswapped).
-  else if t = 'd' then result := GetDWord(Solve(s)) // Return longword.
-  else if t = '_d' then result := GetDWordRev(Solve(s)) // Return longword (byteswapped).
+  p1 := Explode(s,':',1);
+  p2 := Explode(s,':',2);
+  if AnsiPos('"',p2) > 0 then p2 := Explode(s,'":',1); // Adjust if string contains colon.
+  if p2 = '' then fnum := 0
+  else fnum := Solve(p2);
+  if t = 'b' then result := GetByte(Solve(p1),fnum) // Return byte from file array.
+  else if t = 'w' then result := GetWord(Solve(p1),fnum) // Return word.
+  else if t = '_w' then result := GetWordRev(Solve(p1),fnum) // Return word (byteswapped).
+  else if t = 't' then result := (GetWord(Solve(p1),fnum) shl 8)+GetByte(Solve(p1)+2,fnum) // Return 3 bytes.
+  else if t = '_t' then result := GetWordRev(Solve(p1),fnum)+(GetByte(Solve(p1)+2,fnum) shl 16) // Return 3 bytes (byteswapped).
+  else if t = 'd' then result := GetDWord(Solve(p1),fnum) // Return longword.
+  else if t = '_d' then result := GetDWordRev(Solve(p1),fnum) // Return longword (byteswapped).
   else if t = 's' then
     begin
-    param1 := Solve(Explode(s,',',0)); // Get string address.
-    param2 := Solve(Explode(s,',',1)); // Get max length.
-    param3 := Explode(s,',',2); // Get character width if set.
-    if param3 = '' then result := StrtoInt64('$'+CRCString(GetString(param1,param2))) // Return CRC32 of string.
-    else result := StrtoInt64('$'+CRCString(GetStringWide(param1,param2,Solve(param3)))); // Return CRC32 of string.
+    a := Solve(Explode(p1,',',0)); // Get string address.
+    len := Solve(Explode(p1,',',1)); // Get max length.
+    chrw := Explode(p1,',',2); // Get character width if set.
+    if chrw = '' then result := StrtoInt64('$'+CRCString(GetString(a,len,fnum))) // Return CRC32 of string.
+    else result := StrtoInt64('$'+CRCString(GetStringWide(a,len,Solve(chrw),fnum))); // Return CRC32 of string.
     end
   else if t = 'i' then
     begin
-    param1 := Solve(Explode(s,',',0)); // Get string address.
-    param2 := Solve(Explode(s,',',1)); // Get max length.
-    result := StrtoInt64(GetStrInt(param1,param2)); // Return string as integer.
+    a := Solve(Explode(p1,',',0)); // Get string address.
+    len := Solve(Explode(p1,',',1)); // Get max length.
+    result := StrtoInt64(GetStrInt(a,len,fnum)); // Return string as integer.
     end
   else if t = 'find' then
     begin
-    param1 := Solve(Explode(s,',',0)); // Get start address.
-    param2 := Solve(Explode(s,',',1)); // Get end address.
+    a := Solve(Explode(p1,',',0)); // Get start address.
+    a2 := Solve(Explode(p1,',',1)); // Get end address.
     str := Explode(s,'"',1); // Get string to search for.
-    for i := param1 to param2-Length(str) do
+    for i := a to a2-Length(str) do
       if GetString(i,Length(str)) = str then
         begin
         result := i; // Return address where string was found.
