@@ -36,49 +36,32 @@ function rol(l: longword; i: integer): longword;
 function swapendian(l: longword): longword;
 function swapendian64(i: uint64): uint64;
 
-procedure LoadFile(openthis: string);
-procedure SaveFile(savethis: string);
-procedure SaveFileOutput(savethis: string);
-procedure ClipFile(a, len: integer; clipthisfile: string);
-procedure ClipFileOutput(a, len: integer; clipthisfile: string);
-procedure NewFile(filelen: integer);
-procedure NewFileOutput(filelen: integer);
-procedure AddFile(a: integer; addthisfile: string);
-procedure EvenFile;
-procedure EvenFileOutput;
-function GetByte(a: int64): byte;
-function GetByteOutput(a: int64): byte;
-function GetBit(a: int64; b: integer): byte;
+procedure LoadFile(openthis: string; fnum: integer = 0);
+procedure SaveFile(savethis: string; fnum: integer = 0);
+procedure ClipFile(a, len: integer; clipthisfile: string; fnum: integer = 0);
+procedure NewFile(filelen: integer; fnum: integer = 0);
+procedure AppendFile(a: integer; addthisfile: string; fnum: integer = 0);
+procedure EvenFile(fnum: integer = 0);
+function GetByte(a: int64; fnum: integer = 0): byte;
+function GetBit(a: int64; b: integer; fnum: integer = 0): byte;
 function Bit(i, b: integer): byte;
-function GetWord(a: int64): word;
-function GetDword(a: int64): longword;
-function GetWordRev(a: int64): word;
-function GetDwordRev(a: int64): longword;
-function GetString(a, maxlength: int64): string;
-function GetStringWide(a, maxlength, charw: int64): string;
-function GetStrInt(a, maxlength: int64): string;
-function GetWordOutput(a: int64): word;
-function GetDwordOutput(a: int64): longword;
-function GetWordRevOutput(a: int64): word;
-function GetDwordRevOutput(a: int64): longword;
-function GetStringOutput(a, maxlength: int64): string;
-function GetStringWideOutput(a, maxlength, charw: int64): string;
-function GetStrIntOutput(a, maxlength: int64): string;
-procedure WriteByte(a: int64; b: byte);
-procedure WriteWord(a: int64; w: word);
-procedure WriteWordRev(a: int64; w: word);
-procedure WriteDword(a: int64; d: longword);
-procedure WriteDwordRev(a: int64; d: longword);
-procedure WriteByteOutput(a: int64; b: byte);
-procedure WriteWordOutput(a: int64; w: word);
-procedure WriteWordRevOutput(a: int64; w: word);
-procedure WriteDwordOutput(a: int64; d: longword);
-procedure WriteDwordRevOutput(a: int64; d: longword);
+function GetWord(a: int64; fnum: integer = 0): word;
+function GetDword(a: int64; fnum: integer = 0): longword;
+function GetWordRev(a: int64; fnum: integer = 0): word;
+function GetDwordRev(a: int64; fnum: integer = 0): longword;
+function GetString(a, maxlength: int64; fnum: integer = 0): string;
+function GetStringWide(a, maxlength, charw: int64; fnum: integer = 0): string;
+function GetStrInt(a, maxlength: int64; fnum: integer = 0): string;
+procedure WriteByte(a: int64; b: byte; fnum: integer = 0);
+procedure WriteWord(a: int64; w: word; fnum: integer = 0);
+procedure WriteWordRev(a: int64; w: word; fnum: integer = 0);
+procedure WriteDword(a: int64; d: longword; fnum: integer = 0);
+procedure WriteDwordRev(a: int64; d: longword; fnum: integer = 0);
 procedure RunCommand(command: string);
 function FileInUse(f: string): boolean;
 procedure ListFolders(dir: string; subfolders: boolean);
 procedure ListFiles(dir: string; subfolders: boolean);
-procedure GetBase64(a, a2: int64);
+procedure GetBase64(a, a2: int64; fnum, fnum2: integer);
 function ByteToBase64(c: byte): byte;
 procedure MakeFolder(f: string);
 
@@ -86,9 +69,9 @@ var
   val: int64;
   myfile: file;
   hasharray: array of byte;
-  filearray, outputarray: array of byte;
   fs, fpos: integer;
   folderlist, filelist: array of string;
+  filearrays: array of array of byte;
 
 const
   md5table: array[0..63] of longword = ($d76aa478, $e8c7b756, $242070db, $c1bdceee,
@@ -256,7 +239,7 @@ function Solve(s: string): int64;
 var sub, scopy: string;
 begin
   scopy := s;
-  s := ReplaceStr(s,'{filesize}',IntToStr(Length(filearray))); // Insert file size.
+  s := ReplaceStr(s,'{filesize}',IntToStr(Length(filearrays[0]))); // Insert file size.
   s := ReplaceStr(s,'{val}',IntToStr(val)); // Insert predefined value.
   try
     while AnsiPos('}',s) <> 0 do
@@ -657,140 +640,97 @@ end;
 
 { Copy file to memory. }
 
-procedure LoadFile(openthis: string);
+procedure LoadFile(openthis: string; fnum: integer = 0);
 begin
-  if FileExists(openthis) then
-    begin
-    AssignFile(myfile,openthis); // Get file.
-    FileMode := fmOpenRead; // Read only.
-    Reset(myfile,1);
-    SetLength(filearray,FileSize(myfile)); // Match array size to file size.
-    BlockRead(myfile,filearray[0],FileSize(myfile)); // Copy file to memory.
-    CloseFile(myfile); // Close file.
-    fs := Length(filearray);
-    fpos := 0;
-    end;
+  if not FileExists(openthis) then exit;
+  AssignFile(myfile,openthis); // Get file.
+  FileMode := fmOpenRead; // Read only.
+  Reset(myfile,1);
+  SetLength(filearrays[fnum],FileSize(myfile)); // Match array size to file size.
+  BlockRead(myfile,filearrays[fnum][0],FileSize(myfile)); // Copy file to memory.
+  CloseFile(myfile); // Close file.
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]); // Get file size.
+  fpos := 0;
 end;
 
 { Save file from memory to file. }
 
-procedure SaveFile(savethis: string);
+procedure SaveFile(savethis: string; fnum: integer = 0);
 begin
   MakeFolder(savethis); // Create folder if needed.
   AssignFile(myfile,savethis); // Open file.
   FileMode := fmOpenReadWrite;
   ReWrite(myfile,1);
-  BlockWrite(myfile,filearray[0],Length(filearray)); // Copy contents of array to file.
-  CloseFile(myfile); // Close file.
-end;
-
-procedure SaveFileOutput(savethis: string);
-begin
-  MakeFolder(savethis); // Create folder if needed.
-  AssignFile(myfile,savethis); // Open file.
-  FileMode := fmOpenReadWrite;
-  ReWrite(myfile,1);
-  BlockWrite(myfile,outputarray[0],Length(outputarray)); // Copy contents of array to file.
+  BlockWrite(myfile,filearrays[fnum][0],Length(filearrays[fnum])); // Copy contents of array to file.
   CloseFile(myfile); // Close file.
 end;
 
 { Save section of file to another file. }
 
-procedure ClipFile(a, len: integer; clipthisfile: string);
-var myclipfile: file;
-  clipfilearray: array of byte;
+procedure ClipFile(a, len: integer; clipthisfile: string; fnum: integer = 0);
 begin
-  if a+len > fs then len := fs-a; // Don't allow clip to extend outside file.
-  if a > fs then len := 0;
+  if a+len > Length(filearrays[fnum]) then len := Length(filearrays[fnum])-a; // Don't allow clip to extend outside file.
+  if a > Length(filearrays[fnum]) then len := 0;
   MakeFolder(clipthisfile); // Create folder if needed.
-  AssignFile(myclipfile,clipthisfile); // Open file.
+  AssignFile(myfile,clipthisfile); // Open file.
   FileMode := fmOpenReadWrite;
-  ReWrite(myclipfile,1);
-  SetLength(clipfilearray,len);
-  Move(filearray[a],clipfilearray[0],len); // Copy specified section.
-  BlockWrite(myclipfile,clipfilearray[0],len); // Copy contents of array to file.
-  CloseFile(myclipfile); // Close file.
-end;
-
-procedure ClipFileOutput(a, len: integer; clipthisfile: string);
-var myclipfile: file;
-  clipfilearray: array of byte;
-begin
-  if a+len > Length(outputarray) then len := Length(outputarray)-a; // Don't allow clip to extend outside file.
-  if a > Length(outputarray) then len := 0;
-  MakeFolder(clipthisfile); // Create folder if needed.
-  AssignFile(myclipfile,clipthisfile); // Open file.
-  FileMode := fmOpenReadWrite;
-  ReWrite(myclipfile,1);
-  SetLength(clipfilearray,len);
-  Move(outputarray[a],clipfilearray[0],len); // Copy specified section.
-  BlockWrite(myclipfile,clipfilearray[0],len); // Copy contents of array to file.
-  CloseFile(myclipfile); // Close file.
+  ReWrite(myfile,1);
+  BlockWrite(myfile,filearrays[fnum][a],len); // Copy contents of array to file.
+  CloseFile(myfile); // Close file.
 end;
 
 { Create new blank file. }
 
-procedure NewFile(filelen: integer);
+procedure NewFile(filelen: integer; fnum: integer = 0);
 begin
-  if fs > 0 then FillChar(filearray[0],fs,0); // Fill existing file with 0.
-  SetLength(filearray,filelen);
+  if Length(filearrays[fnum]) > 0 then FillChar(filearrays[fnum][0],Length(filearrays[fnum]),0); // Fill existing file with 0.
+  SetLength(filearrays[fnum],filelen);
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
   fs := filelen;
   fpos := 0;
 end;
 
-procedure NewFileOutput(filelen: integer);
-begin
-  if Length(outputarray) > 0 then FillChar(outputarray[0],Length(outputarray),0); // Fill existing file with 0.
-  SetLength(outputarray,filelen);
-end;
-
 { Add file to existing file array. }
 
-procedure AddFile(a: integer; addthisfile: string);
-var myaddfile: file;
+procedure AppendFile(a: integer; addthisfile: string; fnum: integer = 0);
 begin
-  AssignFile(myaddfile,addthisfile); // Get file.
+  if not FileExists(addthisfile) then exit;
+  AssignFile(myfile,addthisfile); // Get file.
   FileMode := fmOpenRead; // Read only.
-  Reset(myaddfile,1);
-  if fs < a+FileSize(myaddfile) then SetLength(filearray,a+FileSize(myaddfile)); // Enlarge file if needed.
-  BlockRead(myaddfile,filearray[a],FileSize(myaddfile)); // Copy file to array.
-  CloseFile(myaddfile); // Close file.
-  fs := Length(filearray);
+  Reset(myfile,1);
+  if Length(filearrays[fnum]) < a+FileSize(myfile) then SetLength(filearrays[fnum],a+FileSize(myfile)); // Enlarge file if needed.
+  BlockRead(myfile,filearrays[fnum][a],FileSize(myfile)); // Copy file to array.
+  CloseFile(myfile); // Close file.
+  if fnum > 0 then exit; // Only update fs for primary file.
+  fs := Length(filearrays[fnum]);
 end;
 
 { Make filesize even. }
 
-procedure EvenFile;
+procedure EvenFile(fnum: integer = 0);
 begin
-  if Odd(fs) then SetLength(filearray,fs+1); // Add 1 byte to end if odd.
-  fs := Length(filearray);
-end;
-
-procedure EvenFileOutput;
-begin
-  if Odd(Length(outputarray)) then SetLength(outputarray,Length(outputarray)+1); // Add 1 byte to end if odd.
+  if not Odd(Length(filearrays[fnum])) then exit;
+  SetLength(filearrays[fnum],Length(filearrays[fnum])+1); // Add 1 byte to end if odd.
+  if fnum > 0 then exit; // Only update fs for primary file.
+  Inc(fs);
 end;
 
 { Get byte from file array. }
 
-function GetByte(a: int64): byte;
+function GetByte(a: int64; fnum: integer = 0): byte;
 begin
-  if a < fs then result := filearray[a]
+  if (a < Length(filearrays[fnum])) and (fnum < Length(filearrays)) then result := filearrays[fnum][a]
   else result := 0;
+  if fnum > 0 then exit; // Only update fpos for primary file.
   fpos := a+1;
-end;
-
-function GetByteOutput(a: int64): byte;
-begin
-  if a < Length(outputarray) then result := outputarray[a]
-  else result := 0;
 end;
 
 { Get bit from file array. }
 
-function GetBit(a: int64; b: integer): byte;
+function GetBit(a: int64; b: integer; fnum: integer = 0): byte;
 begin
-  result := Bit(GetByte(a),b);
+  result := Bit(GetByte(a,fnum),b);
 end;
 
 { Get bit from integer. }
@@ -802,231 +742,154 @@ end;
 
 { Get word from file array. }
 
-function GetWord(a: int64): word;
+function GetWord(a: int64; fnum: integer = 0): word;
 begin
-  result := (GetByte(a)*$100)+GetByte(a+1);
+  result := (GetByte(a,fnum)*$100)+GetByte(a+1,fnum);
+  if fnum > 0 then exit; // Only update fpos for primary file.
   fpos := a+2;
-end;
-
-function GetWordOutput(a: int64): word;
-begin
-  result := (GetByteOutput(a)*$100)+GetByteOutput(a+1);
 end;
 
 { Get longword from file array. }
 
-function GetDword(a: int64): longword;
+function GetDword(a: int64; fnum: integer = 0): longword;
 begin
-  result := (GetWord(a)*$10000)+GetWord(a+2);
+  result := (GetWord(a,fnum)*$10000)+GetWord(a+2,fnum);
+  if fnum > 0 then exit; // Only update fpos for primary file.
   fpos := a+4;
-end;
-
-function GetDwordOutput(a: int64): longword;
-begin
-  result := (GetWordOutput(a)*$10000)+GetWordOutput(a+2);
 end;
 
 { Get word (little endian) from file array. }
 
-function GetWordRev(a: int64): word;
+function GetWordRev(a: int64; fnum: integer = 0): word;
 begin
-  result := (GetByte(a+1)*$100)+GetByte(a);
+  result := (GetByte(a+1,fnum)*$100)+GetByte(a,fnum);
+  if fnum > 0 then exit; // Only update fpos for primary file.
   fpos := a+2;
-end;
-
-function GetWordRevOutput(a: int64): word;
-begin
-  result := (GetByteOutput(a+1)*$100)+GetByteOutput(a);
 end;
 
 { Get longword (little endian) from file array. }
 
-function GetDwordRev(a: int64): longword;
+function GetDwordRev(a: int64; fnum: integer = 0): longword;
 begin
-  result := (GetWordRev(a+2)*$10000)+GetWordRev(a);
+  result := (GetWordRev(a+2,fnum)*$10000)+GetWordRev(a,fnum);
+  if fnum > 0 then exit; // Only update fpos for primary file.
   fpos := a+4;
-end;
-
-function GetDwordRevOutput(a: int64): longword;
-begin
-  result := (GetWordRevOutput(a+2)*$10000)+GetWordRevOutput(a);
 end;
 
 { Get string from file array. }
 
-function GetString(a, maxlength: int64): string;
+function GetString(a, maxlength: int64; fnum: integer = 0): string;
 begin
   result := '';
   while maxlength > 0 do
     begin
     Dec(maxlength);
-    if GetByte(a) in [32..126] then result := result+Chr(GetByte(a)) // Add character to string if valid.
-    else maxlength := 0; // Otherwise end the string.
-    Inc(a); // Next character.
-    fpos := a;
-    end;
-end;
-
-function GetStringOutput(a, maxlength: int64): string;
-begin
-  result := '';
-  while maxlength > 0 do
-    begin
-    Dec(maxlength);
-    if GetByteOutput(a) in [32..126] then result := result+Chr(GetByteOutput(a)) // Add character to string if valid.
+    if GetByte(a,fnum) in [32..126] then result := result+Chr(GetByte(a,fnum)) // Add character to string if valid.
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
     end;
+  if fnum > 0 then exit; // Only update fpos for primary file.
+  fpos := a;
 end;
 
 { As above, but allows for spaces between each letter. }
 
-function GetStringWide(a, maxlength, charw: int64): string;
+function GetStringWide(a, maxlength, charw: int64; fnum: integer = 0): string;
 begin
   result := '';
   while maxlength > 0 do
     begin
     Dec(maxlength);
-    if GetByte(a) in [32..126] then result := result+Chr(GetByte(a)) // Add character to string if valid.
-    else maxlength := 0; // Otherwise end the string.
-    a := a+charw; // Next character.
-    fpos := a;
-    end;
-end;
-
-function GetStringWideOutput(a, maxlength, charw: int64): string;
-begin
-  result := '';
-  while maxlength > 0 do
-    begin
-    Dec(maxlength);
-    if GetByteOutput(a) in [32..126] then result := result+Chr(GetByteOutput(a)) // Add character to string if valid.
+    if GetByte(a,fnum) in [32..126] then result := result+Chr(GetByte(a,fnum)) // Add character to string if valid.
     else maxlength := 0; // Otherwise end the string.
     a := a+charw; // Next character.
     end;
+  if fnum > 0 then exit; // Only update fpos for primary file.
+  fpos := a;
 end;
 
 { Get string integer from file array. }
 
-function GetStrInt(a, maxlength: int64): string;
+function GetStrInt(a, maxlength: int64; fnum: integer = 0): string;
 var b: byte;
 begin
   result := '';
   while maxlength > 0 do
     begin
     Dec(maxlength);
-    b := GetByte(a);
-    if b in [48..57] then result := result+Chr(b) // Add character to string if valid.
-    else if (b = 32) and (result = '') then result := result // Ignore leading spaces.
-    else maxlength := 0; // Otherwise end the string.
-    Inc(a); // Next character.
-    fpos := a;
-    end;
-  if result = '' then result := '0'; // Return 0 if no string is found.
-end;
-
-function GetStrIntOutput(a, maxlength: int64): string;
-var b: byte;
-begin
-  result := '';
-  while maxlength > 0 do
-    begin
-    Dec(maxlength);
-    b := GetByteOutput(a);
+    b := GetByte(a,fnum);
     if b in [48..57] then result := result+Chr(b) // Add character to string if valid.
     else if (b = 32) and (result = '') then result := result // Ignore leading spaces.
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
     end;
   if result = '' then result := '0'; // Return 0 if no string is found.
+  if fnum > 0 then exit; // Only update fpos for primary file.
+  fpos := a;
 end;
 
 { Write single byte to file array. }
 
-procedure WriteByte(a: int64; b: byte);
+procedure WriteByte(a: int64; b: byte; fnum: integer = 0);
 begin
-  if fs < a+1 then SetLength(filearray,a+1); // Enlarge file if needed.
-  filearray[a] := b;
-  fs := Length(filearray);
+  if fnum >= Length(filearrays) then exit;
+  if Length(filearrays[fnum]) < a+1 then SetLength(filearrays[fnum],a+1); // Enlarge file if needed.
+  filearrays[fnum][a] := b;
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]);
   fpos := a+1;
-end;
-
-procedure WriteByteOutput(a: int64; b: byte);
-begin
-  if Length(outputarray) < a+1 then SetLength(outputarray,a+1); // Enlarge file if needed.
-  outputarray[a] := b;
 end;
 
 { Write word to file array. }
 
-procedure WriteWord(a: int64; w: word);
+procedure WriteWord(a: int64; w: word; fnum: integer = 0);
 begin
-  if fs < a+2 then SetLength(filearray,a+2); // Enlarge file if needed.
-  filearray[a] := w shr 8;
-  filearray[a+1] := w and $FF;
-  fs := Length(filearray);
+  if fnum >= Length(filearrays) then exit;
+  if Length(filearrays[fnum]) < a+2 then SetLength(filearrays[fnum],a+2); // Enlarge file if needed.
+  filearrays[fnum][a] := w shr 8;
+  filearrays[fnum][a+1] := w and $FF;
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]);
   fpos := a+2;
-end;
-
-procedure WriteWordOutput(a: int64; w: word);
-begin
-  if Length(outputarray) < a+2 then SetLength(outputarray,a+2); // Enlarge file if needed.
-  outputarray[a] := w shr 8;
-  outputarray[a+1] := w and $FF;
 end;
 
 { Write word (little endian) to file array. }
 
-procedure WriteWordRev(a: int64; w: word);
+procedure WriteWordRev(a: int64; w: word; fnum: integer = 0);
 begin
-  if fs < a+2 then SetLength(filearray,a+2); // Enlarge file if needed.
-  filearray[a+1] := w shr 8;
-  filearray[a] := w and $FF;
-  fs := Length(filearray);
+  if fnum >= Length(filearrays) then exit;
+  if Length(filearrays[fnum]) < a+2 then SetLength(filearrays[fnum],a+2); // Enlarge file if needed.
+  filearrays[fnum][a+1] := w shr 8;
+  filearrays[fnum][a] := w and $FF;
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]);
   fpos := a+2;
-end;
-
-procedure WriteWordRevOutput(a: int64; w: word);
-begin
-  if Length(outputarray) < a+2 then SetLength(outputarray,a+2); // Enlarge file if needed.
-  outputarray[a+1] := w shr 8;
-  outputarray[a] := w and $FF;
 end;
 
 { Write longword to file array. }
 
-procedure WriteDword(a: int64; d: longword);
+procedure WriteDword(a: int64; d: longword; fnum: integer = 0);
 begin
-  if fs < a+4 then SetLength(filearray,a+4); // Enlarge file if needed.
+  if fnum >= Length(filearrays) then exit;
+  if Length(filearrays[fnum]) < a+4 then SetLength(filearrays[fnum],a+4); // Enlarge file if needed.
   WriteWord(a,d shr 16);
   WriteWord(a+2,d and $FFFF);
-  fs := Length(filearray);
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]);
   fpos := a+4;
-end;
-
-procedure WriteDwordOutput(a: int64; d: longword);
-begin
-  if Length(outputarray) < a+4 then SetLength(outputarray,a+4); // Enlarge file if needed.
-  WriteWordOutput(a,d shr 16);
-  WriteWordOutput(a+2,d and $FFFF);
 end;
 
 { Write longword (little endian) to file array. }
 
-procedure WriteDwordRev(a: int64; d: longword);
+procedure WriteDwordRev(a: int64; d: longword; fnum: integer = 0);
 begin
-  if fs < a+4 then SetLength(filearray,a+4); // Enlarge file if needed.
+  if fnum >= Length(filearrays) then exit;
+  if Length(filearrays[fnum]) < a+4 then SetLength(filearrays[fnum],a+4); // Enlarge file if needed.
   WriteWordRev(a+2,d shr 16);
   WriteWordRev(a,d and $FFFF);
-  fs := Length(filearray);
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]);
   fpos := a+4;
-end;
-
-procedure WriteDwordRevOutput(a: int64; d: longword);
-begin
-  if Length(outputarray) < a+4 then SetLength(outputarray,a+4); // Enlarge file if needed.
-  WriteWordRevOutput(a+2,d shr 16);
-  WriteWordRevOutput(a,d and $FFFF);
 end;
 
 { Run an external program. }
@@ -1122,9 +985,9 @@ begin
     end;
 end;
 
-{ Read base64 from file and convert to binary in output file array. }
+{ Read base64 from file and convert to binary in file array. }
 
-procedure GetBase64(a, a2: int64);
+procedure GetBase64(a, a2: int64; fnum, fnum2: integer);
 var b: byte;
   pos: integer;
 label loop;
@@ -1132,31 +995,31 @@ begin
   pos := a2*8; // Set initial position in bits.
 
 loop:
-  b := ByteToBase64(GetByte(a));
+  b := ByteToBase64(GetByte(a,fnum));
   if b = 64 then // Stop at invalid or terminator character (=), or end of file.
     begin
-    SetLength(outputarray,pos div 8); // Trim excess byte.
+    SetLength(filearrays[fnum2],pos div 8); // Trim excess byte.
     exit;
     end;
   a2 := pos div 8; // Get current output byte.
   case pos mod 8 of
     0:
       begin
-      WriteByteOutput(a2,b shl 2);
+      WriteByte(a2,b shl 2,fnum2);
       end;
     6:
       begin
-      WriteByteOutput(a2,(GetByteOutput(a2) and $FC)+(b shr 4));
-      WriteByteOutput(a2+1,(b shl 4) and $F0);
+      WriteByte(a2,(GetByte(a2,fnum2) and $FC)+(b shr 4),fnum2);
+      WriteByte(a2+1,(b shl 4) and $F0,fnum2);
       end;
     4:
       begin
-      WriteByteOutput(a2,(GetByteOutput(a2) and $F0)+(b shr 2));
-      WriteByteOutput(a2+1,(b shl 6) and $C0);
+      WriteByte(a2,(GetByte(a2,fnum2) and $F0)+(b shr 2),fnum2);
+      WriteByte(a2+1,(b shl 6) and $C0,fnum2);
       end;
     2:
       begin
-      WriteByteOutput(a2,(GetByteOutput(a2) and $C0)+b);
+      WriteByte(a2,(GetByte(a2,fnum2) and $C0)+b,fnum2);
       end;
   end;
   Inc(a); // Next byte.

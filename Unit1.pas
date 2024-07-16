@@ -27,11 +27,12 @@ implementation
 
 procedure TForm1.btnGoClick(Sender: TObject);
 begin
-  SetLength(filearray,3);
-  filearray[0] := Ord(' ');
-  filearray[1] := Ord('5');
-  filearray[2] := Ord('5');
-  filearray[3] := 0;
+  SetLength(filearrays,1);
+  SetLength(filearrays[0],4);
+  filearrays[0][0] := Ord(' ');
+  filearrays[0][1] := Ord('5');
+  filearrays[0][2] := Ord('5');
+  filearrays[0][3] := 0;
   fs := 4;
   memOutput.Clear;
   val := 999;
