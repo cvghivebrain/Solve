@@ -239,7 +239,6 @@ function Solve(s: string): int64;
 var sub, scopy: string;
 begin
   scopy := s;
-  s := ReplaceStr(s,'{filesize}',IntToStr(Length(filearrays[0]))); // Insert file size.
   s := ReplaceStr(s,'{val}',IntToStr(val)); // Insert predefined value.
   try
     while AnsiPos('}',s) <> 0 do
@@ -312,6 +311,13 @@ begin
         exit; // Stop searching.
         end;
     result := -1; // String was not found.
+    end
+  else if t = 'filesize' then
+    begin
+    if p1 = '' then fnum := 0 // {filesize} only has 1 parameter.
+    else fnum := Solve(p1);
+    if fnum < Length(filearrays) then result := Length(filearrays[fnum]) // Get file size.
+    else result := 0; // 0 if file isn't loaded.
     end
   else result := 0; // Return nothing.
 end;
