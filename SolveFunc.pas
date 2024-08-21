@@ -37,6 +37,7 @@ function swapendian(l: longword): longword;
 function swapendian64(i: uint64): uint64;
 
 procedure LoadFile(openthis: string; fnum: integer = 0);
+procedure UnloadFile(fnum: integer = 0);
 procedure SaveFile(savethis: string; fnum: integer = 0);
 procedure ClipFile(a, len: integer; clipthisfile: string; fnum: integer = 0);
 procedure NewFile(filelen: integer; fnum: integer = 0);
@@ -659,6 +660,23 @@ begin
   SetLength(filearrays[fnum],FileSize(myfile)); // Match array size to file size.
   BlockRead(myfile,filearrays[fnum][0],FileSize(myfile)); // Copy file to memory.
   CloseFile(myfile); // Close file.
+  if fnum > 0 then exit; // Only update fs/fpos for primary file.
+  fs := Length(filearrays[fnum]); // Get file size.
+  fpos := 0;
+end;
+
+{ Remove file from memory. }
+
+procedure UnloadFile(fnum: integer = 0);
+var i: integer;
+begin
+  if fnum < Length(filearrays)-1 then // Check if file isn't the last one.
+    for i := fnum to Length(filearrays)-1 do
+      begin
+      SetLength(filearrays[i],Length(filearrays[i+1])); // Copy length from next file.
+      Move(filearrays[i+1][0],filearrays[i][0],Length(filearrays[i+1])); // Copy next file into this one.
+      end;
+  SetLength(filearrays,Length(filearrays)-1);
   if fnum > 0 then exit; // Only update fs/fpos for primary file.
   fs := Length(filearrays[fnum]); // Get file size.
   fpos := 0;
