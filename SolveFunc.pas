@@ -22,6 +22,7 @@ function SolveHex(s: string): string;
 
 function Explode(str, delimiter: string; n: integer): string;
 function ExplodeFull(str, delimiter: string; n: integer): string;
+function FirstChar(s: string): string;
 
 function CRCString(s: string): string;
 function CRCFile(fi: string): string;
@@ -385,6 +386,14 @@ begin
     end;
 end;
 
+{ Get first character from a string. }
+
+function FirstChar(s: string): string;
+begin
+  if Length(s) = 0 then result := ''
+  else result := s[1];
+end;
+
 { ====== CRC functions. ====== }
 
 { Left rotate bits in longword. }
@@ -657,6 +666,7 @@ begin
   AssignFile(myfile,openthis); // Get file.
   FileMode := fmOpenRead; // Read only.
   Reset(myfile,1);
+  if fnum+1 > Length(filearrays) then SetLength(filearrays,fnum+1);
   SetLength(filearrays[fnum],FileSize(myfile)); // Match array size to file size.
   BlockRead(myfile,filearrays[fnum][0],FileSize(myfile)); // Copy file to memory.
   CloseFile(myfile); // Close file.
@@ -712,6 +722,7 @@ end;
 
 procedure NewFile(filelen: integer; fnum: integer = 0);
 begin
+  if fnum+1 > Length(filearrays) then SetLength(filearrays,fnum+1);
   if Length(filearrays[fnum]) > 0 then FillChar(filearrays[fnum][0],Length(filearrays[fnum]),0); // Fill existing file with 0.
   SetLength(filearrays[fnum],filelen);
   if fnum > 0 then exit; // Only update fs/fpos for primary file.
